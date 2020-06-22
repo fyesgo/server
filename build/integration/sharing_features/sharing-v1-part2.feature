@@ -583,6 +583,35 @@ Feature: sharing
     Then the OCS status code should be "404"
     And the HTTP status code should be "200"
 
+  Scenario: User is not allowed to reshare file with more permissions even if other shares have them
+    As an "admin"
+    Given user "user0" exists
+    And user "user1" exists
+    And user "user2" exists
+    And As an "user0"
+    And creating a share with
+      | path | /textfile0.txt |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 15 |
+    And As an "user1"
+    And accepting last share
+    And As an "user0"
+    And creating a share with
+      | path | /textfile1.txt |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 17 |
+    And As an "user1"
+    And accepting last share
+    When creating a share with
+      | path | /textfile1 (2).txt |
+      | shareType | 0 |
+      | shareWith | user2 |
+      | permissions | 19 |
+    Then the OCS status code should be "404"
+    And the HTTP status code should be "200"
+
   Scenario: User is not allowed to reshare file with additional delete permissions
   As an "admin"
     Given user "user0" exists
@@ -861,6 +890,37 @@ Feature: sharing
     Given user "user0" exists
     And user "user1" exists
     And user "user2" exists
+    And user "user0" created a folder "/TMP"
+    And As an "user0"
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 21 |
+    And As an "user1"
+    And accepting last share
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user2 |
+      | permissions | 21 |
+    When Updating last share with
+      | permissions | 31 |
+    Then the OCS status code should be "404"
+    And the HTTP status code should be "200"
+
+  Scenario: Do not allow reshare to exceed permissions even if other shares have them
+    Given user "user0" exists
+    And user "user1" exists
+    And user "user2" exists
+    And As an "user0"
+    And creating a share with
+      | path | /FOLDER |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 15 |
+    And As an "user1"
+    And accepting last share
     And user "user0" created a folder "/TMP"
     And As an "user0"
     And creating a share with
