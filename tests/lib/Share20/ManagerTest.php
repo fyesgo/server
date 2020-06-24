@@ -678,7 +678,7 @@ class ManagerTest extends \Test\TestCase {
 		$remoteFile = $this->createMock(Folder::class);
 		$remoteFile->method('isShareable')->willReturn(true);
 		$remoteFile->method('getPermissions')->willReturn(\OCP\Constants::PERMISSION_READ ^ \OCP\Constants::PERMISSION_UPDATE);
- 		$remoteFile->method('getId')->willReturn(108);
+		$remoteFile->method('getId')->willReturn(108);
 		$remoteFile->method('getOwner')
 			->willReturn($owner);
 		$remoteFile->method('getStorage')
