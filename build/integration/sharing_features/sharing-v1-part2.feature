@@ -562,6 +562,36 @@ Feature: sharing
     Then the OCS status code should be "404"
     And the HTTP status code should be "200"
 
+  Scenario: User is allowed to reshare file with more permissions if shares of same file to same user have them
+    Given user "user0" exists
+    And user "user1" exists
+    And user "user2" exists
+    And group "group1" exists
+    And user "user1" belongs to group "group1"
+    And As an "user0"
+    And creating a share with
+      | path | /textfile0.txt |
+      | shareType | 1 |
+      | shareWith | group1 |
+      | permissions | 15 |
+    And As an "user1"
+    And accepting last share
+    And As an "user0"
+    And creating a share with
+      | path | /textfile0.txt |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 17 |
+    And As an "user1"
+    And accepting last share
+    When creating a share with
+      | path | /textfile0 (2).txt |
+      | shareType | 0 |
+      | shareWith | user2 |
+      | permissions | 19 |
+    Then the OCS status code should be "100"
+    And the HTTP status code should be "200"
+
   Scenario: User is not allowed to reshare file with more permissions
   As an "admin"
     Given user "user0" exists
@@ -583,12 +613,69 @@ Feature: sharing
     Then the OCS status code should be "404"
     And the HTTP status code should be "200"
 
-  Scenario: User is not allowed to reshare file with more permissions even if other shares have them
-    As an "admin"
+  Scenario: User is not allowed to reshare file with more permissions even if shares of same file to other users have them
+    Given user "user0" exists
+    And user "user1" exists
+    And user "user2" exists
+    And user "user3" exists
+    And As an "user0"
+    And creating a share with
+      | path | /textfile0.txt |
+      | shareType | 0 |
+      | shareWith | user3 |
+      | permissions | 15 |
+    And As an "user3"
+    And accepting last share
+    And As an "user0"
+    And creating a share with
+      | path | /textfile0.txt |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 17 |
+    And As an "user1"
+    And accepting last share
+    When creating a share with
+      | path | /textfile0 (2).txt |
+      | shareType | 0 |
+      | shareWith | user2 |
+      | permissions | 19 |
+    Then the OCS status code should be "404"
+    And the HTTP status code should be "200"
+
+  Scenario: User is not allowed to reshare file with more permissions even if shares of other files from same user have them
     Given user "user0" exists
     And user "user1" exists
     And user "user2" exists
     And As an "user0"
+    And creating a share with
+      | path | /textfile0.txt |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 15 |
+    And As an "user1"
+    And accepting last share
+    And As an "user0"
+    And creating a share with
+      | path | /textfile1.txt |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 17 |
+    And As an "user1"
+    And accepting last share
+    When creating a share with
+      | path | /textfile1 (2).txt |
+      | shareType | 0 |
+      | shareWith | user2 |
+      | permissions | 19 |
+    Then the OCS status code should be "404"
+    And the HTTP status code should be "200"
+
+  Scenario: User is not allowed to reshare file with more permissions even if shares of other files from other users have them
+    Given user "user0" exists
+    And user "user1" exists
+    And user "user2" exists
+    And user "user3" exists
+    And As an "user3"
     And creating a share with
       | path | /textfile0.txt |
       | shareType | 0 |
@@ -886,6 +973,39 @@ Feature: sharing
     Then the OCS status code should be "100"
     And the HTTP status code should be "200"
 
+  Scenario: Allow reshare to exceed permissions if shares of same file to same user have them
+    Given user "user0" exists
+    And user "user1" exists
+    And user "user2" exists
+    And group "group1" exists
+    And user "user1" belongs to group "group1"
+    And user "user0" created a folder "/TMP"
+    And As an "user0"
+    And creating a share with
+      | path | /TMP |
+      | shareType | 1 |
+      | shareWith | group1 |
+      | permissions | 15 |
+    And As an "user1"
+    And accepting last share
+    And As an "user0"
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 17 |
+    And As an "user1"
+    And accepting last share
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user2 |
+      | permissions | 17 |
+    When Updating last share with
+      | permissions | 31 |
+    Then the OCS status code should be "100"
+    And the HTTP status code should be "200"
+
   Scenario: Do not allow reshare to exceed permissions
     Given user "user0" exists
     And user "user1" exists
@@ -909,11 +1029,75 @@ Feature: sharing
     Then the OCS status code should be "404"
     And the HTTP status code should be "200"
 
-  Scenario: Do not allow reshare to exceed permissions even if other shares have them
+  Scenario: Do not allow reshare to exceed permissions even if shares of same file to other users have them
+    Given user "user0" exists
+    And user "user1" exists
+    And user "user2" exists
+    And user "user3" exists
+    And user "user0" created a folder "/TMP"
+    And As an "user0"
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user3 |
+      | permissions | 15 |
+    And As an "user3"
+    And accepting last share
+    And As an "user0"
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 21 |
+    And As an "user1"
+    And accepting last share
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user2 |
+      | permissions | 21 |
+    When Updating last share with
+      | permissions | 31 |
+    Then the OCS status code should be "404"
+    And the HTTP status code should be "200"
+
+  Scenario: Do not allow reshare to exceed permissions even if shares of other files from same user have them
     Given user "user0" exists
     And user "user1" exists
     And user "user2" exists
     And As an "user0"
+    And creating a share with
+      | path | /FOLDER |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 15 |
+    And As an "user1"
+    And accepting last share
+    And user "user0" created a folder "/TMP"
+    And As an "user0"
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user1 |
+      | permissions | 21 |
+    And As an "user1"
+    And accepting last share
+    And creating a share with
+      | path | /TMP |
+      | shareType | 0 |
+      | shareWith | user2 |
+      | permissions | 21 |
+    When Updating last share with
+      | permissions | 31 |
+    Then the OCS status code should be "404"
+    And the HTTP status code should be "200"
+
+  Scenario: Do not allow reshare to exceed permissions even if shares of other files from other users have them
+    Given user "user0" exists
+    And user "user1" exists
+    And user "user2" exists
+    And user "user3" exists
+    And As an "user3"
     And creating a share with
       | path | /FOLDER |
       | shareType | 0 |
