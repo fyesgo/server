@@ -309,7 +309,7 @@ class Manager implements IManager {
 			$userMountPoint = array_shift($userMountPoints);
 
 			if ($userMountPoint === null) {
-				throw new \Exception('Could not get proper user mount for ' . $userMountPointId . '. Failing since else the next calls are called with null');
+				throw new GenericShareException('Could not get proper user mount for ' . $userMountPointId . '. Failing since else the next calls are called with null');
 			}
 
 			/* Check if this is an incoming share */
