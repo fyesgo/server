@@ -39,30 +39,29 @@ use OCA\Files_Versions\Listener\LoadSidebarListener;
 use OCA\Files_Versions\Versions\IVersionManager;
 use OCA\Files_Versions\Versions\VersionManager;
 use OCP\AppFramework\App;
+use OCP\AppFramework\Bootstrap\IBootContext;
+use OCP\AppFramework\Bootstrap\IBootstrap;
+use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\IAppContainer;
 use OCP\EventDispatcher\IEventDispatcher;
 
-class Application extends App {
+class Application extends App implements IBootstrap {
 	public const APP_ID = 'files_versions';
 
 	public function __construct(array $urlParams = []) {
 		parent::__construct(self::APP_ID, $urlParams);
+	}
 
-		$container = $this->getContainer();
-		$server = $container->getServer();
-
-		/** @var IEventDispatcher $newDispatcher */
-		$dispatcher = $server->query(IEventDispatcher::class);
-
+	public function register(IRegistrationContext $context): void {
 		/**
 		 * Register capabilities
 		 */
-		$container->registerCapability(Capabilities::class);
+		$context->registerCapability(Capabilities::class);
 
 		/**
 		 * Register $principalBackend for the DAV collection
 		 */
-		$container->registerService('principalBackend', function (IAppContainer $c) {
+		$context->registerService('principalBackend', function (IAppContainer $c) {
 			$server = $c->getServer();
 			return new Principal(
 				$server->getUserManager(),
@@ -71,20 +70,23 @@ class Application extends App {
 				$server->getUserSession(),
 				$server->getAppManager(),
 				$server->query(ProxyMapper::class),
-				\OC::$server->getConfig()
+				$server->getConfig()
 			);
 		});
 
-		$container->registerService(IVersionManager::class, function (IAppContainer $c) {
+		$context->registerService(IVersionManager::class, function (IAppContainer $c) {
 			return new VersionManager();
 		});
-
-		$this->registerVersionBackends();
 
 		/**
 		 * Register Events
 		 */
-		$this->registerEvents($dispatcher);
+		$context->registerEventListener(LoadAdditionalScriptsEvent::class, LoadAdditionalListener::class);
+		$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
+	}
+
+	public function boot(IBootContext $context): void {
+		$this->registerVersionBackends();
 
 		/**
 		 * Register hooks
@@ -125,10 +127,5 @@ class Application extends App {
 		} catch (\Exception $e) {
 			$logger->logException($e);
 		}
-	}
-
-	protected function registerEvents(IEventDispatcher $dispatcher) {
-		$dispatcher->addServiceListener(LoadAdditionalScriptsEvent::class, LoadAdditionalListener::class);
-		$dispatcher->addServiceListener(LoadSidebar::class, LoadSidebarListener::class);
 	}
 }
